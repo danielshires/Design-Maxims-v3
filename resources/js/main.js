@@ -60,9 +60,86 @@ const quotes = [
 ];
 
 const LONG_QUOTE_THRESHOLD = 100;
+const CROSSFADE_MS = 250;
+const TOAST_MS = 1800;
 
-const quoteEl = document.getElementById("quotetext");
-const sourceEl = document.getElementById("quotesource");
+// ---------- Tag helpers ----------
+
+function slugify(tag) {
+  return tag.toLowerCase().trim().replace(/\s+/g, "-");
+}
+
+// Derive the tag list from the data so adding a new tag in `quotes` automatically
+// surfaces a new chip. Order: All first, then alphabetical.
+const ALL_TAG = { slug: "all", label: "All" };
+const tagList = (() => {
+  const seen = new Map();
+  for (const q of quotes) {
+    const t = (q.tag || "").trim();
+    if (!t) continue;
+    const slug = slugify(t);
+    if (!seen.has(slug)) seen.set(slug, t);
+  }
+  const tags = Array.from(seen, ([slug, label]) => ({ slug, label }));
+  tags.sort((a, b) => a.label.localeCompare(b.label));
+  return [ALL_TAG, ...tags];
+})();
+
+function poolForTag(slug) {
+  if (!slug || slug === ALL_TAG.slug) {
+    return quotes.map((_, i) => i);
+  }
+  return quotes.reduce((acc, q, i) => {
+    if (q.tag && slugify(q.tag) === slug) acc.push(i);
+    return acc;
+  }, []);
+}
+
+// ---------- Hash routing ----------
+
+function parseHash() {
+  const raw = window.location.hash.replace(/^#/, "");
+  if (!raw) return {};
+  const params = new URLSearchParams(raw);
+  const out = {};
+  const q = params.get("q");
+  const tag = params.get("tag");
+  if (q !== null && /^\d+$/.test(q)) {
+    const n = Number(q);
+    if (n >= 0 && n < quotes.length) out.q = n;
+  }
+  if (tag) {
+    const known = tagList.find((t) => t.slug === tag);
+    if (known) out.tag = known.slug;
+  }
+  return out;
+}
+
+function writeHash({ q, tag } = {}) {
+  const params = new URLSearchParams();
+  if (typeof q === "number") params.set("q", String(q));
+  if (tag && tag !== ALL_TAG.slug) params.set("tag", tag);
+  const next = params.toString();
+  const url = next ? `${window.location.pathname}${window.location.search}#${next}` : window.location.pathname + window.location.search;
+  history.replaceState(null, "", url);
+  // Keep og:url in sync so chat clients that scrape the rendered DOM get the right link.
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.setAttribute("content", window.location.href);
+}
+
+// ---------- Picking quotes ----------
+
+function pickNextIndex(pool, lastIdx) {
+  if (!pool.length) return null;
+  if (pool.length === 1) return pool[0];
+  let next;
+  do {
+    next = pool[Math.floor(Math.random() * pool.length)];
+  } while (next === lastIdx);
+  return next;
+}
+
+// ---------- Colour ----------
 
 function pickRandomColor() {
   // HSL keeps saturation/lightness fixed for consistent contrast against white text.
@@ -76,9 +153,30 @@ function applyRandomColor() {
   document.querySelectorAll("button.mobile-button-random").forEach((btn) => {
     btn.style.color = color;
   });
+  // Active tag chip mirrors the Random button: white pill with bg-coloured text.
+  document.querySelectorAll(".tag-chip.is-active").forEach((chip) => {
+    chip.style.color = color;
+  });
 }
 
-function renderQuote(index) {
+// ---------- Rendering ----------
+
+const quoteEl = document.getElementById("quotetext");
+const sourceEl = document.getElementById("quotesource");
+const chipsEl = document.querySelector("[data-tag-chips]");
+const toastEl = document.querySelector("[data-toast]");
+const shareBtns = () => document.querySelectorAll("[data-share]");
+
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const state = {
+  index: null,
+  tag: ALL_TAG.slug,
+  shareTimer: null,
+  toastTimer: null,
+};
+
+function renderQuoteContent(index) {
   if (!quoteEl || !sourceEl) return;
   const item = quotes[index];
 
@@ -97,12 +195,114 @@ function renderQuote(index) {
   }
 }
 
-function getQuote() {
-  renderQuote(Math.floor(Math.random() * quotes.length));
-  applyRandomColor();
+function renderQuote(index) {
+  state.index = index;
+  if (reduceMotion) {
+    renderQuoteContent(index);
+    return;
+  }
+  // Crossfade: fade out, swap content, fade back in.
+  if (!quoteEl || !sourceEl) return;
+  quoteEl.classList.add("is-changing");
+  sourceEl.classList.add("is-changing");
+  window.setTimeout(() => {
+    renderQuoteContent(index);
+    quoteEl.classList.remove("is-changing");
+    sourceEl.classList.remove("is-changing");
+  }, CROSSFADE_MS);
 }
 
-// Side menu
+// ---------- Tag chips ----------
+
+function renderChips() {
+  if (!chipsEl) return;
+  const bg = document.body.style.backgroundColor;
+  chipsEl.replaceChildren(
+    ...tagList.map((t) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tag-chip";
+      btn.dataset.tag = t.slug;
+      btn.textContent = t.label;
+      if (t.slug === state.tag) {
+        btn.classList.add("is-active");
+        btn.setAttribute("aria-pressed", "true");
+        if (bg) btn.style.color = bg;
+      } else {
+        btn.setAttribute("aria-pressed", "false");
+      }
+      btn.addEventListener("click", () => applyTagFilter(t.slug));
+      return btn;
+    })
+  );
+}
+
+function applyTagFilter(slug) {
+  state.tag = slug;
+  renderChips();
+  const pool = poolForTag(slug);
+  if (!pool.length) return;
+  // If the current quote isn't in the new pool, pick a new one.
+  const next = pool.includes(state.index) ? state.index : pickNextIndex(pool, null);
+  renderQuote(next);
+  applyRandomColor();
+  writeHash({ q: next, tag: slug });
+}
+
+// ---------- Random ----------
+
+function nextRandom() {
+  const pool = poolForTag(state.tag);
+  const next = pickNextIndex(pool, state.index);
+  if (next === null) return;
+  renderQuote(next);
+  applyRandomColor();
+  writeHash({ q: next, tag: state.tag });
+}
+
+// ---------- Share ----------
+
+function showToast(text) {
+  if (!toastEl) return;
+  toastEl.textContent = text;
+  toastEl.hidden = false;
+  toastEl.classList.add("is-visible");
+  if (state.toastTimer) window.clearTimeout(state.toastTimer);
+  state.toastTimer = window.setTimeout(() => {
+    toastEl.classList.remove("is-visible");
+    // Wait for the fade-out before fully hiding so screen readers catch it.
+    window.setTimeout(() => {
+      toastEl.hidden = true;
+    }, 300);
+  }, TOAST_MS);
+}
+
+async function shareCurrent() {
+  if (state.index === null) return;
+  const item = quotes[state.index];
+  const url = window.location.href;
+  const text = `“${item.quote}” — ${item.author}`;
+  const title = "Design Maxims";
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text, url });
+      return;
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      // Fall through to clipboard if the share sheet errored for other reasons.
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast("Link copied");
+  } catch {
+    showToast("Couldn’t copy link");
+  }
+}
+
+// ---------- Side menu ----------
+
 const sideNav = document.getElementById("mySidenav");
 const openMenuBtn = document.querySelector("[data-open-menu]");
 const closeMenuBtn = document.querySelector("[data-close-menu]");
@@ -124,24 +324,70 @@ function closeNav() {
   }
 }
 
+// ---------- Wiring ----------
+
+function isTypingTarget(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+}
+
+function bootstrapFromHash() {
+  const parsed = parseHash();
+  state.tag = parsed.tag || ALL_TAG.slug;
+  const pool = poolForTag(state.tag);
+  let initial;
+  if (typeof parsed.q === "number" && pool.includes(parsed.q)) {
+    initial = parsed.q;
+  } else {
+    initial = pickNextIndex(pool, null);
+  }
+  // Initial render is instant, no crossfade.
+  state.index = initial;
+  renderQuoteContent(initial);
+  applyRandomColor();
+  renderChips();
+  writeHash({ q: initial, tag: state.tag });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-year]").forEach((el) => {
     el.textContent = String(new Date().getFullYear());
   });
 
   document.querySelectorAll("[data-random]").forEach((btn) => {
-    btn.addEventListener("click", getQuote);
+    btn.addEventListener("click", nextRandom);
   });
+
+  shareBtns().forEach((btn) => btn.addEventListener("click", shareCurrent));
 
   if (openMenuBtn) openMenuBtn.addEventListener("click", openNav);
   if (closeMenuBtn) closeMenuBtn.addEventListener("click", closeNav);
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeNav();
+    if (e.key === "Escape") {
+      closeNav();
+      return;
+    }
+    if (isTypingTarget(e.target)) return;
+    if (e.key === " " || e.code === "Space" || e.key === "ArrowRight") {
+      e.preventDefault();
+      nextRandom();
+    }
   });
 
-  if (quoteEl) {
-    renderQuote(Math.floor(Math.random() * quotes.length));
-    applyRandomColor();
-  }
+  // Hash changes from the back button or manual edits.
+  window.addEventListener("popstate", () => {
+    const parsed = parseHash();
+    if (parsed.tag && parsed.tag !== state.tag) {
+      state.tag = parsed.tag;
+      renderChips();
+    }
+    if (typeof parsed.q === "number" && parsed.q !== state.index) {
+      renderQuote(parsed.q);
+      applyRandomColor();
+    }
+  });
+
+  if (quoteEl) bootstrapFromHash();
 });

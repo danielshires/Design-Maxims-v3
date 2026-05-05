@@ -49,7 +49,10 @@ ul {
 
 .background-color {
   background-color: $brand-color;
-  transition: background-color 300ms ease;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: background-color 400ms ease-in-out;
+  }
 }
 
 // Skip link – visible only on focus
@@ -193,6 +196,40 @@ button.mobile-button-random {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+button.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 0.3rem;
+  background: transparent;
+  color: $white;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 0.5rem 0.9rem;
+  margin-right: 0.75rem;
+  cursor: pointer;
+  transition: transform 200ms ease, background-color 200ms ease, border-color 200ms ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: $white;
+    transform: translateY(-2px);
+  }
+
+  @media (min-width: $breakpoint-tablet) {
+    font-size: 1.125rem;
+    padding: 0.75rem 1rem;
+    margin-right: 1rem;
+  }
+
+  @media (min-width: $breakpoint-desktop) {
+    font-size: 1.25rem;
+  }
 }
 
 // ---------- Nav ----------
@@ -358,6 +395,7 @@ main {
 
   .home-wrapper {
     display: flex;
+    flex-direction: column;
     height: 100%;
     width: 100%;
   }
@@ -420,6 +458,15 @@ main {
       font-size: clamp(2.5rem, calc(5vw + 1rem), 8rem);
       line-height: 1.1;
 
+      @media (prefers-reduced-motion: no-preference) {
+        transition: opacity 250ms ease, transform 250ms ease;
+      }
+
+      &.is-changing {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
       // Longer quotes get a smaller, tighter type scale so they still fit the viewport.
       &.long {
         font-size: clamp(1.75rem, calc(3vw + 0.75rem), 5rem);
@@ -434,6 +481,15 @@ main {
       margin-top: 1rem;
       font-size: clamp(1.125rem, calc(1vw + 0.75rem), 2.5rem);
       line-height: 1.3;
+
+      @media (prefers-reduced-motion: no-preference) {
+        transition: opacity 250ms ease, transform 250ms ease;
+      }
+
+      &.is-changing {
+        opacity: 0;
+        transform: translateY(8px);
+      }
 
       a {
         color: inherit;
@@ -505,6 +561,89 @@ footer {
     span {
       border-bottom: 1px solid currentColor;
     }
+  }
+}
+
+// ---------- Tag chips ----------
+
+.tag-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 1rem 0 1.5rem;
+  padding-bottom: 0.5rem;
+  // Mobile: scroll horizontally if chips overflow.
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: $breakpoint-tablet) {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+.tag-chip {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: transparent;
+  color: $white;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, transform 200ms ease;
+
+  &:hover {
+    border-color: $white;
+    background-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+  }
+
+  &.is-active {
+    background-color: $white;
+    border-color: $white;
+    color: var(--chip-active-color, currentColor);
+  }
+
+  @media (min-width: $breakpoint-tablet) {
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+  }
+}
+
+// ---------- Toast ----------
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 2.5rem;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(0, 0, 0, 0.85);
+  color: $white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 100;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+
+  &.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
 

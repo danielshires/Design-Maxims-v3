@@ -2,7 +2,7 @@
 
 > Short quotes and ruminations on what design (and life) can be.
 
-A small static site that displays a random design quote on each visit. Click "Random" to roll a new one — the background colour shifts with it.
+A small static site that displays a random design quote on each visit. Click "Random" to roll a new one — the background colour shifts with it. Every quote has a permalink, so any URL is shareable.
 
 [Live site](https://www.danielshires.com) · By [Daniel Shires](https://www.danielshires.com)
 
@@ -14,6 +14,25 @@ A small static site that displays a random design quote on each visit. Click "Ra
 - Fluid typography via CSS `clamp()`
 - 56 curated quotes with HSL-randomised background per click
 - Long quotes (> 100 chars) get a tighter type scale via a `.long` class
+- Tag filter chip row, native Share button + clipboard fallback, hash-based permalinks
+- 250 ms crossfade between quotes and 400 ms bg colour transition (both respect `prefers-reduced-motion`)
+
+## Permalinks and keyboard shortcuts
+
+URLs use the hash to encode the active quote and tag filter so any link is shareable:
+
+```text
+/                              → random quote
+/#q=12                         → quote at index 12
+/#q=7&tag=graphic-design       → quote 7, with the Graphic Design filter active
+```
+
+The hash is updated via `history.replaceState`, so back/forward buttons aren't polluted with every "Random" click.
+
+Keyboard shortcuts (when focus is not in a form field):
+
+- `Space` or `→` — show the next random quote
+- `Esc` — close the mobile menu
 
 ## Project layout
 
@@ -64,13 +83,13 @@ Edit `resources/js/main.js` and append to the `quotes` array:
 { quote: "Good design is honest.", author: "Dieter Rams", url: "https://en.wikipedia.org/wiki/Dieter_Rams", tag: "Product Design" }
 ```
 
-Both `url` and `tag` are optional — leave blank (`""`) for unlinked / untagged attribution. `tag` isn't surfaced in the UI yet but is preserved for future filtering.
+Both `url` and `tag` are optional — leave blank (`""`) for unlinked / untagged attribution. New tags surface as chips automatically (the chip row is derived from the data); untagged quotes only appear under the `All` chip.
 
 ## Deployment
 
 This is a fully static site. The compiled CSS (`resources/css/styles.css`) is committed to the repo, so deployment is just "copy these files to a web server" — no build step on the host.
 
-**Workflow when you change SCSS:**
+**Workflow when you change SCSS:** always rebuild before pushing — Netlify does not run a build step, so the committed `styles.css` is what ships.
 
 ```bash
 npm run build:css   # rebuild styles.css locally
