@@ -163,6 +163,7 @@ function applyRandomColor() {
 
 const quoteEl = document.getElementById("quotetext");
 const sourceEl = document.getElementById("quotesource");
+const mainHomeEl = document.getElementById("main");
 const chipsEl = document.querySelector("[data-tag-chips]");
 const toastEl = document.querySelector("[data-toast]");
 const shareBtns = () => document.querySelectorAll("[data-share]");
@@ -360,6 +361,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   shareBtns().forEach((btn) => btn.addEventListener("click", shareCurrent));
+
+  if (mainHomeEl && quoteEl) {
+    mainHomeEl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("button, a, input, textarea, select, summary, label")) return;
+      if (t.closest("#quotetext, #quotesource")) return;
+      const sel = window.getSelection();
+      if (sel && sel.toString().trim()) return;
+      nextRandom();
+    });
+  }
 
   if (openMenuBtn) openMenuBtn.addEventListener("click", openNav);
   if (closeMenuBtn) closeMenuBtn.addEventListener("click", closeNav);
