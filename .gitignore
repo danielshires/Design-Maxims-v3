@@ -8,5 +8,8 @@ node_modules/
 # Sourcemaps – regenerated on build
 *.css.map
 
+# Netlify build output
+public/
+
 # OS
 Thumbs.db

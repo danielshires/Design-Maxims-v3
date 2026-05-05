@@ -1,10 +1,29 @@
-# The compiled CSS is checked in (resources/css/styles.css), so Netlify
-# just publishes the repo as-is — no build step. To update styles, run
-# `npm run build:css` locally and commit the result.
+# Builds a clean `public/` folder containing only the production files.
+# Source SCSS, design assets, and docs are kept out of the deploy.
+# To update styles, run `npm run build:css` locally and commit the result.
 
 [build]
-publish = "."
-command = ""
+publish = "public"
+command = """
+rm -rf public
+mkdir public
+cp -R \
+  index.html \
+  about.html \
+  404.html \
+  icon.png \
+  tile.png \
+  favico.ico \
+  humans.txt \
+  robots.txt \
+  browserconfig.xml \
+  site.webmanifest \
+  images \
+  resources \
+  public/
+# Strip non-public sub-folders from resources/
+rm -rf public/resources/ai public/resources/doc
+"""
 
 [[headers]]
   for = "/resources/css/*.css"
