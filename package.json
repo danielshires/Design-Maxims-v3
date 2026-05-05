@@ -7,7 +7,7 @@
   "license": "MIT",
   "homepage": "https://www.danielshires.com",
   "scripts": {
-    "build:css": "sass resources/css/styles.scss resources/css/styles.css --style=compressed --no-source-map",
+    "build:css": "node -e \"console.log('node', process.version)\" && sass --version && sass --style=compressed --no-source-map resources/css/styles.scss:resources/css/styles.css && echo 'CSS built ok' && ls -la resources/css/styles.css",
     "watch:css": "sass --watch resources/css/styles.scss resources/css/styles.css --no-source-map",
     "dev": "npx --yes serve@latest .",
     "build": "npm run build:css"
