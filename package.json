@@ -1,0 +1,18 @@
+{
+  "name": "design-maxims",
+  "version": "1.1.0",
+  "description": "Short quotes and ruminations on what design (and life) can be.",
+  "private": true,
+  "author": "Daniel Shires <hello@danielshires.com>",
+  "license": "MIT",
+  "homepage": "https://www.danielshires.com",
+  "scripts": {
+    "build:css": "sass resources/css/styles.scss resources/css/styles.css --style=compressed --no-source-map",
+    "watch:css": "sass --watch resources/css/styles.scss resources/css/styles.css --no-source-map",
+    "dev": "npx --yes serve@latest .",
+    "build": "npm run build:css"
+  },
+  "devDependencies": {
+    "sass": "^1.77.0"
+  }
+}

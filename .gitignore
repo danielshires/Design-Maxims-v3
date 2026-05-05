@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+*.log
+.cache/
+.idea/
+.vscode/
+
+# Sourcemaps – regenerated on build
+*.css.map
+
+# OS
+Thumbs.db
