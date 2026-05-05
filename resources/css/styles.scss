@@ -419,6 +419,12 @@ main {
       // Fluid type: scales smoothly from ~2.5rem on small screens to ~8rem on large.
       font-size: clamp(2.5rem, 5vw + 1rem, 8rem);
       line-height: 1.1;
+
+      // Longer quotes get a smaller, tighter type scale so they still fit the viewport.
+      &.long {
+        font-size: clamp(1.75rem, 3vw + 0.75rem, 5rem);
+        line-height: 1.2;
+      }
     }
 
     .author {

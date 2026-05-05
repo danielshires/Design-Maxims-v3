@@ -12,10 +12,12 @@ A small static site that displays a random design quote on each visit. Click "Ra
 - Sass (Dart Sass) compiled to a single `styles.css`
 - Work Sans served from Google Fonts
 - Fluid typography via CSS `clamp()`
+- 56 curated quotes with HSL-randomised background per click
+- Long quotes (> 100 chars) get a tighter type scale via a `.long` class
 
 ## Project layout
 
-```
+```text
 011-Design-Maxims/
 ├── index.html              # Random-quote homepage
 ├── about.html              # About page
@@ -59,14 +61,18 @@ npm run dev         # spins up a static server at http://localhost:3000
 Edit `resources/js/main.js` and append to the `quotes` array:
 
 ```js
-{ quote: "Good design is honest.", author: "Dieter Rams", url: "https://en.wikipedia.org/wiki/Dieter_Rams" }
+{ quote: "Good design is honest.", author: "Dieter Rams", url: "https://en.wikipedia.org/wiki/Dieter_Rams", tag: "Product Design" }
 ```
 
-`url` is optional — leave it blank (`""`) for unlinked attribution.
+Both `url` and `tag` are optional — leave blank (`""`) for unlinked / untagged attribution. `tag` isn't surfaced in the UI yet but is preserved for future filtering.
 
 ## Deployment
 
-This is a fully static site. After running `npm run build:css`, deploy the project root to any static host (Netlify, Vercel, GitHub Pages, S3, etc.).
+This is a fully static site.
+
+**Netlify** (configured via `netlify.toml`): point a Netlify site at this repo and it will run `npm run build:css` then publish the project root. Static assets in `resources/css/` and `resources/js/` are served with a 1-year immutable cache.
+
+**Other hosts** (Vercel, GitHub Pages, S3, etc.): run `npm run build:css` and upload the project root.
 
 ## License
 
