@@ -68,11 +68,19 @@ Both `url` and `tag` are optional — leave blank (`""`) for unlinked / untagged
 
 ## Deployment
 
-This is a fully static site.
+This is a fully static site. The compiled CSS (`resources/css/styles.css`) is committed to the repo, so deployment is just "copy these files to a web server" — no build step on the host.
 
-**Netlify** (configured via `netlify.toml`): point a Netlify site at this repo and it will run `npm run build:css` then publish the project root. Static assets in `resources/css/` and `resources/js/` are served with a 1-year immutable cache.
+**Workflow when you change SCSS:**
 
-**Other hosts** (Vercel, GitHub Pages, S3, etc.): run `npm run build:css` and upload the project root.
+```bash
+npm run build:css   # rebuild styles.css locally
+git commit -am "Update styles"
+git push
+```
+
+**Netlify** (configured via `netlify.toml`): point a site at this repo. No build command runs; Netlify publishes the project root and applies a 1-year immutable cache to `/resources/css/` and `/resources/js/`.
+
+**Other hosts** (Vercel, GitHub Pages, S3, etc.): upload the project root.
 
 ## License
 

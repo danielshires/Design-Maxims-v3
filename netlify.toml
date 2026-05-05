@@ -1,9 +1,10 @@
+# The compiled CSS is checked in (resources/css/styles.css), so Netlify
+# just publishes the repo as-is — no build step. To update styles, run
+# `npm run build:css` locally and commit the result.
+
 [build]
 publish = "."
-command = "npm run build:css"
-
-[build.environment]
-NODE_VERSION = "20"
+command = ""
 
 [[headers]]
   for = "/resources/css/*.css"
