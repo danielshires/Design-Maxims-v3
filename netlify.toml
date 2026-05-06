@@ -1,29 +1,13 @@
-# Builds a clean `public/` folder containing only the production files.
-# Source SCSS, design assets, and docs are kept out of the deploy.
-# To update styles, run `npm run build:css` locally and commit the result.
+# Builds CSS from SCSS, then stages a clean `public/` folder for deploy.
+# Design sources under resources/ai and resources/doc are copied then removed from the publish tree.
 
 [build]
 publish = "public"
-command = """
-rm -rf public
-mkdir public
-cp -R \
-  index.html \
-  about.html \
-  404.html \
-  icon.png \
-  tile.png \
-  favico.ico \
-  humans.txt \
-  robots.txt \
-  browserconfig.xml \
-  site.webmanifest \
-  images \
-  resources \
-  public/
-# Strip non-public sub-folders from resources/
-rm -rf public/resources/ai public/resources/doc
-"""
+# Single-line command avoids fragile multiline/backslash parsing on Netlify runners.
+command = "npm ci && npm run build && rm -rf public && mkdir -p public && cp -R index.html about.html 404.html icon.png tile.png favico.ico humans.txt robots.txt browserconfig.xml site.webmanifest images resources public/ && rm -rf public/resources/ai public/resources/doc"
+
+[build.environment]
+NODE_VERSION = "20"
 
 [[headers]]
   for = "/resources/css/*.css"
