@@ -7,6 +7,19 @@ $breakpoint-tablet: 768px;
 $brand-color: #0c82ea;
 $white: #fff;
 
+// Typography — Contemporary editorial (Newsreader + Inter)
+$font-ui: "Inter", system-ui, -apple-system, sans-serif;
+$font-quote: "Newsreader", Georgia, "Times New Roman", serif;
+
+// Light “paper” homepage theme (navy / sage typography)
+$home-text: #1a2d36;
+$home-text-muted: rgba(26, 45, 54, 0.72);
+$home-border: rgba(26, 45, 54, 0.14);
+$home-border-strong: rgba(26, 45, 54, 0.28);
+
+// Subtle grain (feTurbulence) — no extra asset file
+$home-noise-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
 // ---------- Mixins ----------
 
 @mixin flex-space {
@@ -36,7 +49,7 @@ $white: #fff;
 }
 
 body {
-  font-family: "Work Sans", sans-serif;
+  font-family: $font-ui;
   width: 100%;
   min-height: 100vh;
   margin: 0;
@@ -58,7 +71,10 @@ body.page-home {
   max-height: 100dvh;
   overflow: hidden;
 
+  // Stack page above full-viewport noise
   #page.content {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -98,7 +114,12 @@ body.page-home {
       .quote-wrapper {
         flex: 1 1 auto;
         min-height: 0;
-        overflow: hidden;
+        // Fit is handled with JS font scaling — no vertical scroll.
+        overflow-x: hidden;
+        overflow-y: hidden;
+        overscroll-behavior: contain;
+        justify-content: center;
+        padding-block: clamp(0.35rem, 2vmin, 1rem);
       }
     }
   }
@@ -117,10 +138,64 @@ ul {
 
 .background-color {
   background-color: $brand-color;
+}
+
+// Muted light gradient base — JS sets `--paper-a` … `--paper-g` + `--accent` per quote
+body.page-home.background-color {
+  --accent: #2a4d52;
+  --paper-a: #faf9f5;
+  --paper-b: #e8f2f0;
+  --paper-c: #d7e8ec;
+  --paper-d: #c7dde5;
+  --paper-e: #b7d2de;
+  --paper-f: #a8c7d7;
+  --paper-g: #98bcd0;
+  position: relative;
+  color: $home-text;
+  background-color: var(--paper-a);
+  background-image: linear-gradient(
+    155deg,
+    var(--paper-a) 0%,
+    var(--paper-b) 16%,
+    var(--paper-c) 32%,
+    var(--paper-d) 48%,
+    var(--paper-e) 62%,
+    var(--paper-f) 78%,
+    var(--paper-g) 100%
+  );
 
   @media (prefers-reduced-motion: no-preference) {
-    transition: background-color 400ms ease-in-out;
+    transition: background-color 0.45s ease, background-image 0.45s ease;
+
+    .mobile-button-random {
+      transition: color 320ms ease;
+    }
+
+    .tag-chip {
+      transition: background-color 280ms ease, color 280ms ease, border-color 280ms ease,
+        box-shadow 280ms ease, transform 200ms ease;
+    }
   }
+
+  &::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: $home-noise-svg;
+    background-repeat: repeat;
+    background-size: 200px 200px;
+  }
+}
+
+body.page-home :focus-visible {
+  outline-color: $home-text;
+}
+
+body.page-home .skip-link:focus {
+  outline-color: $white;
 }
 
 // Skip link – visible only on focus
@@ -166,13 +241,20 @@ header {
   }
 }
 
+body.page-home header {
+  border-bottom-color: $home-border;
+}
+
 .header-content {
   @include flex-space;
   align-items: center;
   width: 100%;
 
   h1 {
+    font-family: $font-ui;
     font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
     color: $white;
     text-shadow: -3px 3px 0 rgba(0, 0, 0, 0.6);
     margin: 0;
@@ -200,6 +282,20 @@ header {
     @media (min-width: $breakpoint-desktop) {
       display: block;
     }
+  }
+}
+
+body.page-home .header-content {
+  h1 {
+    color: $home-text;
+    text-shadow: none;
+  }
+
+  .logo-sub-desktop {
+    color: $home-text-muted;
+    opacity: 1;
+    font-weight: 400;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -255,6 +351,12 @@ button.mobile-button-random {
   }
 }
 
+body.page-home button.mobile-button-random {
+  background-color: rgba(255, 255, 255, 0.94);
+  color: var(--accent, #2a4d52);
+  box-shadow: 0 1px 2px rgba(26, 45, 54, 0.06);
+}
+
 .icon-button {
   -webkit-appearance: none;
   appearance: none;
@@ -269,60 +371,6 @@ button.mobile-button-random {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-button.share-button {
-  // Strip Chrome / Safari native button chrome so fills and borders aren’t overridden.
-  -webkit-appearance: none;
-  appearance: none;
-  margin: 0;
-  border-style: solid;
-  box-shadow: none;
-  font-family: inherit;
-  vertical-align: middle;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 0.3rem;
-  background-color: transparent;
-  background-image: none;
-  color: $white;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1;
-  white-space: nowrap;
-  padding: 0.5rem 0.9rem;
-  margin-right: 0.75rem;
-  cursor: pointer;
-  transition: transform 200ms ease, background-color 200ms ease, border-color 200ms ease;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.12);
-    border-color: $white;
-    transform: translateY(-2px);
-  }
-
-  svg {
-    flex-shrink: 0;
-    color: inherit;
-    display: block;
-  }
-
-  span {
-    color: inherit;
-  }
-
-  @media (min-width: $breakpoint-tablet) {
-    font-size: 1.125rem;
-    padding: 0.75rem 1rem;
-    margin-right: 1rem;
-  }
-
-  @media (min-width: $breakpoint-desktop) {
-    font-size: 1.25rem;
-  }
 }
 
 // ---------- Nav ----------
@@ -351,6 +399,14 @@ nav {
       opacity: 1;
     }
   }
+}
+
+body.page-home nav ul {
+  color: $home-text;
+}
+
+body.page-home .icon-button {
+  color: $home-text;
 }
 
 li.nav-desktop-text {
@@ -529,28 +585,38 @@ main {
 
   .quote-wrapper {
     display: flex;
-    flex-wrap: wrap;
+    // Keep a single column: wrapping would place the author beside the quote when
+    // the viewport height is fixed (body.page-home) and the quote block is tall.
+    flex-wrap: nowrap;
     flex-direction: column;
     justify-content: center;
-    align-content: flex-start;
+    align-content: stretch;
+    align-items: stretch;
     margin: 0;
     word-wrap: break-word;
     text-align: left;
     min-height: calc(100vh - 200px);
     width: 100%;
-
-    @media (min-width: $breakpoint-desktop-hd) {
-      width: 90%;
-    }
+    // Reliable vertical rhythm between quote and attribution (avoids overlap when margins collapse).
+    gap: clamp(1.35rem, 3.8vmin, 2.75rem);
 
     .quote {
       margin: 0;
-      font-weight: 600;
-      opacity: 0.95;
-      max-width: 100%;
+      font-family: $font-quote;
+      font-weight: 500;
+      font-optical-sizing: none;
+      font-variation-settings: "wght" 500, "opsz" 120;
+      opacity: 0.97;
+      width: 100%;
+      // Most quotes read better wider (~chart-reading width); cap rem so ultrawide stays sane.
+      max-width: min(78%, 72rem);
+      flex: 0 1 auto;
+      min-height: 0;
       // Fluid type: scales smoothly from ~2.5rem on small screens to ~8rem on large.
       font-size: clamp(2.5rem, calc(5vw + 1rem), 8rem);
-      line-height: 1.1;
+      // Room for serif descenders on the last line before attribution.
+      line-height: 1.22;
+      padding-bottom: 0.08em;
 
       @media (prefers-reduced-motion: no-preference) {
         transition: opacity 250ms ease, transform 250ms ease;
@@ -561,20 +627,36 @@ main {
         transform: translateY(8px);
       }
 
+      @media (max-width: $breakpoint-tablet) {
+        font-variation-settings: "wght" 500, "opsz" 90;
+      }
+
       // Longer quotes get a smaller, tighter type scale so they still fit the viewport.
       &.long {
         font-size: clamp(1.75rem, calc(3vw + 0.75rem), 5rem);
-        line-height: 1.2;
+        line-height: 1.28;
+        font-variation-settings: "wght" 500, "opsz" 72;
+
+        @media (max-width: $breakpoint-tablet) {
+          font-variation-settings: "wght" 500, "opsz" 60;
+          line-height: 1.3;
+        }
       }
     }
 
     .author {
+      flex-shrink: 0;
+      font-family: $font-ui;
       text-transform: uppercase;
       font-weight: 600;
-      opacity: 0.7;
-      margin-top: 1rem;
-      font-size: clamp(1.125rem, calc(1vw + 0.75rem), 2.5rem);
-      line-height: 1.3;
+      letter-spacing: 0.12em;
+      opacity: 0.82;
+      margin-top: 0;
+      font-size: clamp(0.75rem, 0.45vw + 0.65rem, 0.8125rem);
+      line-height: 1.35;
+      width: 100%;
+      max-width: min(78%, 72rem);
+      box-sizing: border-box;
 
       @media (prefers-reduced-motion: no-preference) {
         transition: opacity 250ms ease, transform 250ms ease;
@@ -587,10 +669,12 @@ main {
 
       a {
         color: inherit;
+        font-weight: inherit;
+        letter-spacing: inherit;
         display: inline-block;
         text-decoration: none;
         border-bottom: 1px solid currentColor;
-        opacity: 0.85;
+        opacity: 0.92;
         transition: opacity 300ms ease;
 
         &:hover {
@@ -598,6 +682,15 @@ main {
         }
       }
     }
+  }
+}
+
+body.page-home main {
+  color: $home-text;
+
+  &::before {
+    mix-blend-mode: multiply;
+    opacity: 0.065;
   }
 }
 
@@ -658,6 +751,22 @@ footer {
   }
 }
 
+body.page-home footer {
+  color: $home-text;
+
+  a {
+    color: $home-text;
+  }
+
+  .footer-mobile .footer-sub {
+    background-color: rgba(26, 45, 54, 0.06);
+  }
+
+  .footer-mobile p {
+    color: $home-text-muted;
+  }
+}
+
 // ---------- Tag chips ----------
 
 .tag-chips {
@@ -714,30 +823,32 @@ footer {
   }
 }
 
-// ---------- Toast ----------
+body.page-home .tag-chip {
+  border-color: $home-border-strong;
+  color: $home-text;
 
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: 2.5rem;
-  transform: translateX(-50%) translateY(8px);
-  background: rgba(0, 0, 0, 0.85);
-  color: $white;
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 0.65rem 1.1rem;
-  border-radius: 999px;
-  pointer-events: none;
-  opacity: 0;
-  z-index: 100;
-
-  @media (prefers-reduced-motion: no-preference) {
-    transition: opacity 200ms ease, transform 200ms ease;
+  &:hover {
+    border-color: $home-text;
+    background-color: rgba(26, 45, 54, 0.05);
   }
 
-  &.is-visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+  &.is-active {
+    background-color: $home-text;
+    border-color: $home-text;
+    color: $white;
+    box-shadow: 0 2px 10px rgba(26, 45, 54, 0.18);
+
+    &:hover {
+      background-color: rgba(26, 45, 54, 0.88);
+      border-color: rgba(26, 45, 54, 0.88);
+      color: $white;
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.95);
+      outline-offset: 2px;
+    }
   }
 }
 
